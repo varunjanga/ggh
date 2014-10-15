@@ -1,0 +1,253 @@
+
+<!-- saved from url=(0056)http://groups.csail.mit.edu/cis/lattice/code/manual.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>...</title><style type="text/css"></style><script type="text/javascript" src="http://ads.dfgio.com/loader.js?client=topaz0003"></script></head>
+
+<body bgcolor="white">
+<p><a name="introduction"></a></p><h1><a name="introduction">Introduction</a></h1>
+
+<p>This library provides an implementation of the [GGH96] algorithm for
+public-key encryption, due to S. Tzvetkov. For a description of 
+the algorithm read the 
+<a href="ftp://theory.lcs.mit.edu/pub/people/oded/pkcs.ps">paper</a> 
+by O. Goldreich, S. Goldwasser, and S. Halevi.
+<br>
+<b>Original Webpage</b>:- <a href="http://groups.csail.mit.edu/cis/lattice/code/manual.html">http://groups.csail.mit.edu/cis/lattice/code/manual.html</a>
+
+</p><p>Contents:<br>
+</p><ol>
+<li><a href="#introduction">Introduction</a>
+</li><li><a href="#download">Download</a>
+</li><li><a href="#description">Description</a>
+</li><li><a href="#matlab">Loading files in Matlab</a>
+</li><li><a href="#reference">Class reference</a>
+</li><li><a href="#notes">Notes</a>
+
+
+<p><a name="download"></a></p><h1><a name="download">Download</a></h1>
+<hr/>
+// Comment by varun on Oct-16-2014
+<br>
+Following link seems to be broken. I have used <a href="https://github.com/varunjanga/varunjanga.github.io/blob/master/files/lidia-2.3.0.tar.bz2?raw=true">LiDIA-2.3.0</a> and it worked.
+<strike>
+<p>To download the LiDIA package go to
+<a href="http://www.informatih.th-darmstadt.de/TI/LiDIA/">http://www.informatih.th-darmstadt.de/TI/LiDIA/</a>. Read the instructions for installation.
+</strike>
+</p>
+Following files can be found in the repo
+<strike>
+<p>To download the library choose one of the archive files:<br>
+</p><ul>
+<li><a href="http://groups.csail.mit.edu/cis/lattice/code/Key.tgz">Key.tgz</a>
+</li><li><a href="http://groups.csail.mit.edu/cis/lattice/code/Key.zip">Key.zip</a>
+</li></ul>
+</strike>
+<hr/>
+Files in the archive:<br>
+<ul>
+<li>Key.h       -  class definitions
+</li><li>Key.cpp     -  class implementations
+</li><li>Invert.cpp  -  gaussian elimination; included by Key.cpp
+</li></ul>
+
+<p><a name="description"></a></p><h1><a name="description">Description</a></h1>
+
+<p>There are two classes defined in Key.h, <b>private_key</b> and
+<b>public_key</b>. To generate a new pair of keys, use
+<b>private_key::generate(int dim,int lll=0,int inv=0)</b>. <b>dim</b> is the
+size of the lattice basis. If <b>lll</b> is nonzero, the transforamation
+matrix is reduced using the LLL algorithm; this works for dimentions up to
+approximately 200. If <b>inv</b> is nonzero then LiDIA's built-in, although
+still undocumented, matrix inversion function is used (<b>bigfloat_matrix::invert</b>), which is slower, but supposedly more reliable than our function
+(a simple Gaussian elimination).
+
+</p><p>The data for the public key is contained in the private key. All you
+need to do to initialize a public key is to call
+<b>private_key::make_public(public_key &amp;pubkey)</b>.
+
+</p><p>Of course, the public key can be initialized without knowing the private
+key. The stream I/O operators <b>&lt;&lt;</b> and <b>&gt;&gt;</b> are predefined for both
+of the classes. There are two output formats - plain and matlab. To change
+the output format use <b>get_print_format</b> and <b>set_print_format</b>.
+Only the plain format is supported for input.
+
+</p><p>There are <a href="#matlab">instructions</a> on how to load the generated
+data in Matlab.
+
+</p><p>Basic encryption/decryption of lattice vector is implemented in
+<b>public_key::encrypt</b> and <b>private_key::decrypt</b>. To encrypt a
+message, a bit-string <b>b[i]</b>, there are two algorithms:
+</p><ul>
+<li>embedding the message in the error vector<br>
+  <b>v[i]=random(-128..127)</b><br>
+  <b>e[i]=random(-3,2)</b> if <b>b[i]=0</b> and <b>random(-2,3)</b> if
+  <b>b[i]=1</b>
+</li><li>embedding the message in the lattice vector<br>
+  <b>v[i]=random_even(-128..126)</b> if <b>b[i]=0</b> and
+  <b>random_odd(-127..127)</b> if <b>b[i]=1</b><br>
+  <b>e[i]=random(-3,-2,2,3)</b>
+</li></ul>
+To set the algorithm use <b>get_method</b> and <b>set_method</b>.
+
+<p>Here is a sample program that uses the library:
+
+<font size="-1"></font></p><pre><font size="-1">#include "Key.h"
+
+
+private_key privkey;
+public_key pubkey;
+
+main() {
+  privkey.generate(100);         // generate private key
+
+  ofstream fout("key.100");
+  fout &lt;&lt; privkey;               // write private key to file
+  fout.close();
+
+  privkey.make_public(pubkey);   // initialize public key
+
+  int_vector b(100,100,FIXED);   // int_vector defined in Key.h
+  for (int i=0; i&lt;100; i++)
+    b[i] = rand()&amp;1;             // a random message
+
+  bigint_vector c(100,100,FIXED); // also defined in Key.h
+  pubkey.set_method(1);
+  c = pubkey.encrypt_bitstr(b);   // encrypt message
+
+  int_vector d(100,100,FIXED);
+  privkey.set_method(pubkey.get_method());
+  d = privkey.decrypt_bitstr(c);  // decrypt message
+
+  if (!b.equal(d))                // compare with the original
+    cerr &lt;&lt; "Ooops!" &lt;&lt; endl;
+}
+</font></pre>
+<p>A typical makefile for building such a program is given bellow:
+(<b>lib</b> and <b>include</b> here are assumed to be links to the
+corresponding LiDIA directories)
+
+<font size="-1"></font></p><pre><font size="-1">myprog:	myprog.cpp Key.o
+	g++ -o myprog myprog.cpp Key.o -Llib/ -Iinclude/ -lm -lLiDIA
+Key.o:	Key.cpp Key.h Invert.cpp
+	g++ -c -o Key.o Key.cpp -Iinclude/
+</font></pre>
+
+<p><a name="#matlab"></a></p><h1><a name="#matlab">Loading files in Matlab</a></h1>
+
+<p>Because Matlab cannot read <b>.m</b> files with more than 255 characters
+per row, we have to use <b>.mat</b> files. The following example shows how
+to read a private key in Matlab (in this case <b>dim=100</b>):
+
+<font size="-1"></font></p><pre><font size="-1">load A.mat -ascii
+Rinv = A(1:100,:);
+T = A(101:200,:);
+B = A(201:300,:);
+</font></pre>
+
+
+<p><a name="reference"></a></p><h1><a name="reference">Class reference</a></h1>
+
+<p></p><dl><dt>Class <b>private_key</b>:</dt>
+<dd><font size="-1"><pre>int get_method(void);
+void set_method(int m);</pre></font>
+If <b>m=1</b> the message is embedded in the error vector, and if <b>m=2</b>
+then it is in the lattice vector.
+
+<font size="-1"><pre>int get_print_format(void);
+void set_print_format(int f);</pre></font>
+If <b>f=1</b> the format is plain, if <b>f=2</b> it is matlab. (The only
+difference is that the plain format starts with a line containing the
+dimention.)
+
+<font size="-1"><pre>void generate(int dim, int lll=0, int inv=0);</pre></font>
+Generate a private key.<br>
+If <b>lll!=0</b> then the transformation matrix is reduced  by LiDIA's LLL
+algorithm.<br>
+If <b>inv!=0</b> then LiDIA's <b>bigfloat_matrix::invert</b> is used instead
+of our inversion.
+
+<font size="-1"><pre>void make_public(public_key &amp;pubkey);</pre></font>
+Copy the public key.
+
+<font size="-1"><pre>int get_dim(void);</pre></font>
+Returns the dimention of the private key.
+
+<font size="-1"><pre>bigint_vector decrypt(bigint_vector c);</pre></font>
+Decrypt <b>c</b>. Basically this computes <b>T*round(Rinv*c)</b>
+
+<font size="-1"><pre>int_vector decrypt_bitstr(bigint_vector c);</pre></font>
+Decrypt a bit-string message.
+
+<font size="-1"><pre>friend istream &amp; operator &gt;&gt; (istream &amp; in, private_key &amp; privkey);
+friend ostream &amp; operator &lt;&lt; (ostream &amp; out, const private_key &amp; privkey);</pre></font>
+Stream I/O.
+</dd>
+
+<p></p><dt>Class <b>public_key</b>:</dt>
+<dd><font size="-1"><pre>int get_method(void);
+void set_method(int m);</pre></font>
+If <b>m=1</b> the message is embedded in the error vector, and if <b>m=2</b>
+then it is in the lattice vector.
+
+<font size="-1"><pre>int get_print_format(void);
+void set_print_format(int f);</pre></font>
+If <b>f=1</b> the format is plain, if <b>f=2</b> it is matlab. (The only
+difference is that the plain format starts with a line containing the
+dimention.)
+
+<font size="-1"><pre>int get_dim(void);</pre></font>
+Returns the dimention of the private key.
+
+<font size="-1"><pre>bigint_vector encrypt(bigint_vector v,bigint_vector e);</pre></font>
+Compute <b>B*v+e</b>.
+
+<font size="-1"><pre>bigint_vector encrypt_bitstr(int_vector b);</pre></font>
+Encrypt the bit-string message <b>b</b> using the current method.
+
+<font size="-1"><pre>friend istream &amp; operator &gt;&gt; (istream &amp; in, public_key &amp; pubkey);
+friend ostream &amp; operator &lt;&lt; (ostream &amp; out, const public_key &amp; pubkey);</pre></font>
+Stream I/O.
+</dd>
+</dl>
+<p><a name="notes"></a></p><h1><a name="notes">Notes</a></h1>
+
+<p>There are several problems that appear when working with higher dimentions.
+For example, if you use LLL to reduce the transformation matrix, usually before
+dimention 200 it stops working (sleeps forever). If you don't use LLL, the
+entries in the transformation matrix get big--about 9-10 digits for
+<b>dim=100</b> and 19-20 digits for <b>dim=200</b>. The larger digits in the
+private and the public key make the encryption and decryption a little bit
+slower (about 10-12%).
+
+</p><p>The key generation usually takes a while. On a Pentium-133 with 32MB RAM,
+running Linux we got the following running times (measured in seconds):
+<font size="-1"></font></p><pre><font size="-1">dim =      50    60    70    80    90   100   110   120   130   140   150   160   170   180
+-------------------------------------------------------------------------------------------
+w/ LLL:    66   151   360   734  1242  1999  3123  4818  6816 11693 15657 21581 28025 32156
+w/out LLL: 17    29    46    68    98   136   182   235   303   376   465   556   687   835</font></pre>
+
+<p>As we said above, if you don't use LLL, the entries in the transformation
+matrix <b>T</b> get large. Since we store <b>T</b> as a <b>bigint_matrix</b>,
+we don't have a problem with storing the matrix itself. However, <b>T</b> is
+computed as an inverse of <b>T^-1</b> using Gaussian elimination. The process
+of inversion requires higher precision and floating point matrix as a buffer.
+We use <b>bigfloat</b> numbers which have the default precision of 20 decimal
+digits. This is enough up to about <b>dim=160</b>. You'll have to increase the
+precision for higher dimentions. This could be done using the
+<b>bigfloat::set_precision(p)</b> function. For example:
+<font size="-1"></font></p><pre><font size="-1">...
+int main(int argc, char **argv) {
+  bigfloat::set_precision(50);
+  private_key privkey;
+  public_key pubkey;
+
+  privkey.generate(200);
+...</font></pre>
+
+<p>Another problem is due to the great amount of memory used. More precisely if
+you free the memory used for a key, you are not guaranteed that you will be
+able to use it for anouther one. (I.e., there is memory fragmentation.) We
+suspect that LiDIA has problems in dealing with very large matrices.
+
+
+
+</p></li></ol></body></html>
