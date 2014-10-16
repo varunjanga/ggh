@@ -57,10 +57,10 @@ void private_key::generate(int dim, int lll, int inv) {
       k = rand()%i;  
       j = cols[k];  cols[k] = cols[i-1];  // j is the column to be changed
       for (k=0; k<dim; k++)
-	if (k==j)
-	  x[k] = 1;
-	else
-	  x[k] = ((rand()>>12)%7+4)/5-1;  // {-1,0,1} biased towards 0
+        if (k==j)
+          x[k] = 1;
+        else
+          x[k] = ((rand()>>12)%7+4)/5-1;  // {-1,0,1} biased towards 0
 
       // compute the new column
       T.sto_column_vector(T*x,dim,j);

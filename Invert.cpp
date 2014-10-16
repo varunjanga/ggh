@@ -25,8 +25,8 @@ static void invert_bigint_matrix(const bigint_matrix &A_, bigfloat_matrix &B_) {
     assert(i!=N);                                       // with a nonzero entry
     if (i!=row) {                                       // in row-th column
       for (j=0; j<N; j++) {
-	dummy=A(row,j); A(row,j)=A(i,j); A(i,j)=dummy; // exchange with
-	dummy=B(row,j); B(row,j)=B(i,j); B(i,j)=dummy; // row-th row
+        dummy=A(row,j); A(row,j)=A(i,j); A(i,j)=dummy; // exchange with
+        dummy=B(row,j); B(row,j)=B(i,j); B(i,j)=dummy; // row-th row
       }
     }
     lambda = A(row,row);
@@ -37,8 +37,8 @@ static void invert_bigint_matrix(const bigint_matrix &A_, bigfloat_matrix &B_) {
     for (i=row+1; i<N; i++) {  // subtract from other rows
       lambda = A(i,row);
       for (j=0; j<N; j++) {
-	A(i,j) -= A(row,j)*lambda;
-	B(i,j) -= B(row,j)*lambda;
+        A(i,j) -= A(row,j)*lambda;
+        B(i,j) -= B(row,j)*lambda;
       }
     }
   }
@@ -47,8 +47,8 @@ static void invert_bigint_matrix(const bigint_matrix &A_, bigfloat_matrix &B_) {
     for (i=0; i<row; i++) {
       lambda = A(i,row);
       for (j=0; j<N; j++) {
-	A(i,j) -= A(row,j)*lambda;
-	B(i,j) -= B(row,j)*lambda;
+        A(i,j) -= A(row,j)*lambda;
+        B(i,j) -= B(row,j)*lambda;
       }
     }
 
