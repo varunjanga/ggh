@@ -71,11 +71,11 @@ public:
 class public_key {
 
 private:
-  bigint_matrix B;
   int method;
   int print_format;
 
 public:
+  bigint_matrix B;
   // constructor
   public_key() { method=1; print_format=1; }
 
@@ -89,6 +89,21 @@ public:
 
   // get the dimention of the basis
   int get_dim(void) { return B.get_no_of_rows(); }
+  void get_determinant(bigint &det,int mod=-1) { 
+    if(mod == -1)
+      return B.latticedet1(det);
+    else{
+      bigint_matrix temp;
+      temp = B;
+      int dim = get_dim();
+      for (int i=0; i<dim; i++) for (int j=0; j<dim; j++)  temp.sto(i,j,temp(i,j)%mod);
+      return temp.latticedet1(det);
+    }
+  }
+  void apply_mod(int mod){
+    int dim = B.get_no_of_rows();
+    for (int i=0; i<dim; i++) for (int j=0; j<dim; j++)  B.sto(i,j,B(i,j)%mod);
+  }
 
   // encryption functions
   bigint_vector encrypt(bigint_vector v,bigint_vector e);

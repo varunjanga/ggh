@@ -1,3 +1,4 @@
+#include <assert.h>
 
 // invert a integer matrix using gaussian elimination
 static void invert_bigint_matrix(const bigint_matrix &A_, bigfloat_matrix &B_) {

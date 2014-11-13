@@ -54,13 +54,16 @@ void private_key::generate(int dim, int lll, int inv) {
     // process columns in random order
     for (i=0; i<dim; i++)  cols[i]=i;
     for (i=dim; i!=0; i--) {
+      srand(time(NULL));
       k = rand()%i;  
       j = cols[k];  cols[k] = cols[i-1];  // j is the column to be changed
       for (k=0; k<dim; k++)
         if (k==j)
           x[k] = 1;
-        else
+        else{
+          srand(time(NULL));
           x[k] = ((rand()>>12)%7+4)/5-1;  // {-1,0,1} biased towards 0
+        }
 
       // compute the new column
       T.sto_column_vector(T*x,dim,j);
@@ -95,7 +98,6 @@ void private_key::generate(int dim, int lll, int inv) {
     round(Ti(i,j)).bigintify(t);
     T.sto(i,j,t);
   }
-
 }
 
 
@@ -124,11 +126,11 @@ bigint_vector public_key::encrypt_bitstr(int_vector b) {
       if (rand()&1)  e[i]=-2;  else  e[i]=3;
       if (b[i])  e[i]=-e[i];
     } else {
-      v[i] = (((rand()%256)>>1)<<1)-128;
-      if (b[i])  v[i]++;
+      // v[i] = (((rand()%256)>>1)<<1)-128;
+      // if (b[i])  v[i]++;
       if (rand()&1)  e[i]=-3;  else  e[i]=3;
+      v[i] = b[i];
     }
-
   return  encrypt(v,e);
 }
 
@@ -176,7 +178,7 @@ int_vector private_key::decrypt_bitstr(bigint_vector c) {
       b[i] = (e[i]==2 || e[i]==-3);
     } else {
       v[i].intify(b[i]);
-      b[i] &= 1;
+      // b[i] &= 1;
     }
 
   return b;
@@ -245,9 +247,7 @@ ostream & operator << (ostream & out, const private_key & privkey) {
 	out << ' ' << privkey.B(i,j);
       out << endl;
     }
-  
   }
-  
   return out;
 }
 

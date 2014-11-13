@@ -6,7 +6,7 @@ private_key privkey;
 public_key pubkey;
 
 main() {
-  int dimension = 200;
+  int dimension = 100;
   privkey.generate(dimension);         // generate private key
 
   ofstream fout("key.100");
